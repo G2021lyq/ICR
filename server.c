@@ -24,6 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "head.h"
+
+struct user client; //用户名和密码。
 
 #define LISTEN_QUEUE_NUM 5
 #define ECHO_PORT 2022
@@ -37,6 +40,7 @@ int main (int argc, char *argv[])
 	int request_sock; //监听套接字
 	int new_sock; //连接套接字
 	
+	int flag;
 	int i=0;
 	
 	//创建监听套接字
@@ -70,17 +74,47 @@ int main (int argc, char *argv[])
 	}
 	
 	while(1)
-        {
-                addrlen = sizeof(remote);
-
-                //有人登录，进行连接。
-                if((new_sock = accept(request_sock, (struct sockaddr *)&remote, &addrlen)) < 0)
-                {
-
-                        perror("accept");
-                        continue;
-                }
-                printf("第%d次从客户端接收请求.\n",++i);
-         }
+	{
+		addrlen = sizeof(remote);
+		//有人登录，进行连接。
+		if((new_sock = accept(request_sock, (struct sockaddr *)&remote, &addrlen)) < 0)
+		{
+		//监听套接字，获得客户端地址和长度 
+			perror("accept");
+			continue;
+		}
+		//得到了一个客户端的请求 
+		printf("第%d次从客户端接收请求.\n",++i);
+		int out = 0;
+		while(!out)
+		{
+			recv(new_sock, &client, sizeof(struct user), 0);//接收从客户端(new_sock)发送过来的客户信息
+			switch(client.flag)	
+			{
+				case 0://client.flag=0进行登录验证
+					flag = anybody_login(client);	
+					//将登录成功(或失败)的信息返回客户端 
+					if (flag) out = flag;
+					if(send(new_sock, &flag, sizeof(int), 0) < 0) 
+					{
+						perror("send1 : "); 
+					}
+					//登录失败
+					if(flag != 1)
+						continue;
+					break;
+				case 1://client.flag=1进行注册验证
+					flag = anybody_register(client);
+					//将注册成功(或失败)的信息返回客户端
+					if(send(new_sock, &flag, sizeof(int), 0) < 0) 
+					{
+						perror("send1 : "); 
+					}
+					break;
+				default :
+					break;
+			}
+		}
+	}
 	return 0;
 }

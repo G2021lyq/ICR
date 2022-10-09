@@ -16,8 +16,11 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+#include "head.h"
+
 #define SERVER_NAME "192.168.139.131"
 #define ECHO_PORT 2022
+
 
 int q;
 //记录进程号
@@ -28,7 +31,9 @@ int main (int argc, char *argv[])
         int sock;	//套接字
         struct sockaddr_in servaddr;
         struct hostent *server;
-
+	
+	char username[20];      //用户名
+	
         server = gethostbyname(SERVER_NAME);
 
         //创建socket套接字
@@ -66,8 +71,13 @@ int main (int argc, char *argv[])
                 q=pid+1;
                 printf("%d\n",q);
         }
+        if(client_login(sock, username,q) != 0)
+        {
+                close(sock);
+                return -1;
+        }
         
-        close(sock);
+        //close(sock);
 
         return 0;
 }
