@@ -25,12 +25,15 @@
 #include <string.h>
 
 #include "head.h"
-
-struct user client; //用户名和密码。
+#include "head2.h"
 
 #define LISTEN_QUEUE_NUM 5
 #define ECHO_PORT 2022
 
+struct user client; //用户名和密码。
+extern struct msg *head;       //在线用户的链表头   
+extern pthread_mutex_t mutex_1;        //互斥锁，用于在线用户链表/聊天记录文件
+//线程执行函数
 
 int main (int argc, char *argv[])
 {
@@ -40,9 +43,21 @@ int main (int argc, char *argv[])
 	int request_sock; //监听套接字
 	int new_sock; //连接套接字
 	
+	pthread_t thread_id;    //声明线程ID;
+	
 	int flag;
 	int i=0;
 	
+	//创建在线用户链表的头节点
+        head = (struct msg *)malloc(sizeof(struct msg));
+        head->next = NULL;
+        
+	//初始化互斥锁  
+        if(pthread_mutex_init(&mutex_1, NULL) < 0)
+        {
+                printf("mutex1 init error\n");
+                return -1;
+        }
 	//创建监听套接字
 	if((request_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
 	{
@@ -94,7 +109,6 @@ int main (int argc, char *argv[])
 				case 0://client.flag=0进行登录验证
 					flag = anybody_login(client);	
 					//将登录成功(或失败)的信息返回客户端 
-					if (flag) out = flag;
 					if(send(new_sock, &flag, sizeof(int), 0) < 0) 
 					{
 						perror("send1 : "); 
@@ -102,6 +116,11 @@ int main (int argc, char *argv[])
 					//登录失败
 					if(flag != 1)
 						continue;
+					out = 1;
+					if(pthread_create(&thread_id, NULL, (void *)thread_routine, &new_sock) != 0)
+                                	{
+                                    		close(new_sock);        //若失败，主进程关掉连接套接字
+                                	}
 					break;
 				case 1://client.flag=1进行注册验证
 					flag = anybody_register(client);

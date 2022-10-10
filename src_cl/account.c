@@ -32,12 +32,16 @@ int client_login (int sockfd,char *username,int q)
                                 
                                 system("tput cup 14 13");  
                                 printf("\t正在登录,请稍等...\033[0m\n");
+                                
                                 client.flag = 0;
+                                //1
                                 send(sockfd, &client, sizeof(struct user), 0);      //发送用户名和密码
+                                //2
                                 recv(sockfd, &flag, sizeof(int), 0);            //接收服务器的信息flag
+                                
                                 if(flag == 1)//验证成功
                                 {
-                                        strcpy(username, client.name);//将名字返回到主函数
+                                        strcpy(username, client.name);//将名字返回到主函数 
                                         is_login=1;
                                         sleep(2);
                                 }
@@ -92,7 +96,5 @@ int client_login (int sockfd,char *username,int q)
                                 break;
                 }
         }
-	system("reset");
-        system("tput cup 3 13");  printf("\033[32;1m登录成功\033[0m\n");
         return 0;
 }

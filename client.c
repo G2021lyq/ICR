@@ -17,23 +17,28 @@
 #include <sys/wait.h>
 
 #include "head.h"
+#include "head2.h"
 
-#define SERVER_NAME "192.168.139.131"
+#define SERVER_NAME "127.0.0.1"
 #define ECHO_PORT 2022
 
+#define RET_OK  0
+#define RET_ERR -1
+#define LISTEN_QUEUE_NUM 5
 
 int q;
 //记录进程号
 
+char username[32];      //用户名
+int onlinefd;           //服务器端的TCP连接后的套接字
+char onlinename[1024];  //在线用户列表
+
 int main (int argc, char *argv[])
 {
-        int i=0;
         int sock;	//套接字
         struct sockaddr_in servaddr;
         struct hostent *server;
-	
-	char username[20];      //用户名
-	
+        
         server = gethostbyname(SERVER_NAME);
 
         //创建socket套接字
@@ -57,7 +62,7 @@ int main (int argc, char *argv[])
         }
         
         pid_t pid=fork();
-        
+     	
         if(pid<0)
         {
                 fprintf(stderr,"错误!");
@@ -71,13 +76,21 @@ int main (int argc, char *argv[])
                 q=pid+1;
                 printf("%d\n",q);
         }
+        
         if(client_login(sock, username,q) != 0)
         {
                 close(sock);
                 return -1;
         }
-        
-        //close(sock);
+        create(3);
+        //3,4
+        recv(sock, &onlinefd, sizeof(int), 0);
+        recv(sock, onlinename, sizeof(onlinename), 0);
+        system("tput cup 12 13");  printf("\033[34;1m%s\033[0m\n", onlinename); //打印在线用户名单
 
+	work(sock,pid,q);
+	
+        close(sock);
         return 0;
+   
 }

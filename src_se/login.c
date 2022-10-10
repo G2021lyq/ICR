@@ -4,7 +4,6 @@ int anybody_login (struct user client)
 {
 	struct user users[USER_SIZE]; 
 	int i;
-	struct msg *p;
 	int flag = 0;//检验用户名和密码匹配，0表示失败，1表示成功，-1表示重复登录。
 	FILE *fp; 
 //查用户表 

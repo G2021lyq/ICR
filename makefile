@@ -12,7 +12,7 @@ include=./include
 
 # 第一条规则
 .PHONY: all
-all: $(targetse) $(targetcl) user.dat
+all: $(targetse) $(targetcl) user.dat log.txt
 
 # 依赖中都是 xx.o yy.o zz.o
 # gcc命令执行的是链接操作
@@ -22,6 +22,8 @@ $(targetcl): $(objcl)
 	gcc $^ -o $@
 user.dat:
 	touch user.dat
+log.txt:
+	touch log.txt
 
 # 模式匹配规则
 # 执行汇编操作, 前两步: 预处理, 编译是自动完成
@@ -33,6 +35,7 @@ clean:
 	-rm $(objse) $(targetse) -f
 	-rm $(objcl) $(targetcl) -f
 	-rm user.dat
+	-rm log.txt
         
        
 
